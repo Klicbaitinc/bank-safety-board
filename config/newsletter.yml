@@ -1,0 +1,6 @@
+# Newsletter call to action. Hidden on every page while `url` is empty.
+# Use an https subscribe page (for example beehiiv). No form is hosted here.
+url: ""
+heading: "The free banking note"
+text: "A short email when FDIC and NCUA quarterly figures update, plus notable bank failures. Unsubscribe anytime."
+button: "Subscribe"

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<article class="prose">
+<h1>Methodology</h1>
+<p>This site reprints public numbers from the FDIC and the NCUA. It does not grade banks, assign stars, estimate a CAMELS rating, assign a regulatory capital category, or predict failures. A percentile on an institution page is only the share of peers that reported a lower figure.</p>
+
+<h2>Banks</h2>
+<p>Active banks come from the FDIC BankFind institutions feed with <code>ACTIVE:1</code>. The FDIC defines that flag as institutions that are currently open and insured by the FDIC. {{ bank_meta.active_institutions | comma }} institutions were in that filter when the file was pulled ({{ bank_meta.fetched_at }}).</p>
+<p>Financial figures come from the FDIC financials feed for these quarter-ends: {{ bank_meta.quarters | join(", ") }}. The site treats {{ bank_meta.quarter }} ({{ bank_meta.as_of }}) as the current bank quarter because it is the newest of those quarters with a broad set of filers. Dollar fields in that feed are thousands of dollars. They are multiplied by 1,000 before display.</p>
+<ul>
+  <li><b>Total deposits</b> and <b>total assets</b> are the FDIC fields DEP and ASSET.</li>
+  <li><b>Total equity capital</b> is EQ. <b>Equity to assets</b> is EQ divided by ASSET, computed here.</li>
+  <li><b>Total risk-based capital ratio</b> is RBCRWAJ, total risk-based capital divided by risk-weighted assets, already in percent.</li>
+  <li><b>Common equity tier 1 capital ratio</b> is IDT1CER, already in percent.</li>
+  <li><b>Tier 1 leverage ratio</b> is RBC1AAJ, already in percent.</li>
+  <li><b>Noncurrent loans</b> is NCLNLSR, noncurrent loans and leases divided by gross loans and leases, already in percent. Noncurrent means 90 days or more past due, or in nonaccrual.</li>
+  <li><b>Return on assets</b> is ROA, annualized net income as a percent of average total assets.</li>
+  <li><b>Domestic offices</b> is OFFICES on the institution record. The FDIC counts the main office and other locations where deposit accounts are opened, deposits are accepted, checks are paid, or loans are granted.</li>
+  <li><b>CBLRIND</b> marks banks that elected the community bank leverage ratio. For those banks the FDIC file puts 0 in the total risk-based and common-equity-tier-1 ratios. This site leaves those two ratios blank and shows the tier 1 leverage ratio, which is filled in. A handful of U.S. offices of foreign banks also have 0 in every capital-ratio field and no equity amount; those ratios are left blank too.</li>
+</ul>
+<p>For {{ bank_quarter }}, the percentile counts used {{ rbc_n | comma }} banks with a total risk-based capital ratio, {{ npl_n | comma }} with a noncurrent-loan ratio, and {{ roa_n | comma }} with return on assets. The percentile is the percent of those banks with a strictly lower figure. Ties count with the equal-or-higher group. Banks that did not report the field are left out of that count. A bank whose newest report is older than {{ bank_quarter }} does not get a percentile.</p>
+<p>The official record for a bank is linked as <code>https://banks.data.fdic.gov/bankfind-suite/bankfind/details/</code> plus the certificate number.</p>
+
+<h2>Failed banks</h2>
+<p>The failures page lists FDIC failure records whose resolution type is FAILURE ({{ fail_meta.count | comma }} when pulled {{ fail_meta.fetched_at }}). Assets, deposits, and estimated loss were reported in thousands of dollars and are multiplied by 1,000. Other resolution types in the file are counted in the page note and are not listed as failures.</p>
+
+<h2>Credit unions</h2>
+<p>Credit union pages are the institutions on the NCUA federally insured credit union list ({{ cu_meta.count | comma }} when pulled {{ cu_meta.fetched_at }}). Call-report dollars come from the 5300 files FS220 and FS220A for {{ cu_meta.quarters | join(", ") }}. Those amounts are already in dollars.</p>
+<ul>
+  <li><b>Total assets</b> is ACCT_010. <b>Shares and deposits</b> is ACCT_018. <b>Total loans and leases</b> is ACCT_025B. <b>Delinquent loans</b> is ACCT_041B, loans and leases two months or more past due. <b>Total net worth</b> is ACCT_997.</li>
+  <li>The trend column <b>net worth ÷ assets</b> is ACCT_997 divided by ACCT_010. The summary <b>net worth ratio (NCUA list)</b> is the ratio on the insured-credit-union list, which NCUA describes as net worth divided by total assets excluding the CECL transition provision. The two can differ slightly.</li>
+  <li><b>Delinquent loans ÷ loans</b> is ACCT_041B divided by ACCT_025B. It is a 60-day measure. It is not the bank noncurrent-loan ratio.</li>
+  <li><b>Return on average assets</b> is taken from the insured-credit-union list for the current quarter only. Earlier quarters are not given an estimated ROA.</li>
+  <li><b>Branch offices</b> are rows in the NCUA branch file with site type “Branch Office.” Corporate offices are counted separately. <b>Trade names</b> come from the call-report trade-name file.</li>
+  <li><b>Members</b>, charter type, and the low-income designation come from the insured list. The low-income designation is about field of membership, not a financial score.</li>
+</ul>
+<p>For {{ cu_quarter }}, percentiles used {{ cu_nwr_n | comma }} credit unions for the net worth ratio, {{ cu_dlq_n | comma }} for the delinquent-loan ratio, and {{ cu_roa_n | comma }} for return on average assets. Banks and credit unions are not pooled. The ratios are defined differently.</p>
+<p>Each credit union page links to the <a href="https://mapping.ncua.gov/ResearchCreditUnion" rel="noopener noreferrer">NCUA research tool</a> and the <a href="https://ncua.gov/analysis/credit-union-corporate-call-report-data/quarterly-data" rel="noopener noreferrer">quarterly call report files</a>. Search the charter number in the research tool. This site does not control that tool.</p>
+
+<h2>Military and veteran page</h2>
+<p>A credit union is listed when its NCUA charter name or trade name contains one of these phrases, matched on word boundaries: {{ phrases | join(", ") }}. “Veteran” also matches “veterans.” These charters are also listed because the NCUA name is a short installation or service name the phrases miss: {% for charter in extra_charters %}{{ charter }}{% if not loop.last %}, {% endif %}{% endfor %}. Charter 24921 is SERVICE in Portsmouth, New Hampshire. Charter 66530, also named SERVICE, is in Green Bay, Wisconsin, and is not listed. The page is not an NCUA field-of-membership determination.</p>
+
+<h2>Insurance limits</h2>
+<p>The standard FDIC limit is $250,000 per depositor, per insured bank, for each account ownership category. The standard NCUA share-insurance limit is $250,000 per member, per insured credit union, for each account ownership category. Ownership categories can raise coverage. This site does not calculate a person’s coverage. See <a href="https://www.fdic.gov/resources/deposit-insurance" rel="noopener noreferrer">fdic.gov</a> and <a href="https://ncua.gov/consumers/share-insurance-coverage" rel="noopener noreferrer">ncua.gov</a>.</p>
+
+<h2>What is left out</h2>
+<ul>
+  <li>No letter grade, star rating, safety score, or failure probability.</li>
+  <li>No claim that a higher capital ratio or a lower delinquency ratio means a bank is “safe.”</li>
+  <li>Closed banks that merged and did not fail do not get an active bank page. Failures stay on the failures list.</li>
+  <li>Affiliate offers and the newsletter appear only when their config files have an https URL. Both are empty until they are filled in.</li>
+</ul>
+
+<h2>Refresh</h2>
+<p>A GitHub Actions workflow rebuilds this site from the FDIC API and the NCUA files. Requests send the user agent <code>BankSafetySavingsBoard {{ contact }}</code> and pause between calls. If a download fails, the workflow keeps the last data file that was committed and still builds the site.</p>
+</article>
+{% endblock %}

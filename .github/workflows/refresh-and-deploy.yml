@@ -1,0 +1,107 @@
+# Daily refresh + deploy to GitHub Pages.
+# Schedule: 07:20 UTC. Also runs on push to main and manual dispatch.
+#
+# data/*.json is committed back to main. That commit only touches data files
+# and is marked [skip ci], and this workflow ignores pushes that only change
+# data/, so the data commit cannot start another run.
+#
+# Pages source must be GitHub Actions. configure-pages enablement tries to
+# turn Pages on when the workflow has permission to do so.
+#
+# Optional repository variables:
+#   FDIC_USER_AGENT  contact string sent to FDIC and NCUA
+#   SITE_URL         origin only, default https://klicbaitinc.github.io
+#   BASE_PATH        path prefix, default /bank-safety-board (use / for a user site)
+name: Refresh data and deploy site
+
+on:
+  schedule:
+    - cron: "20 7 * * *"
+  push:
+    branches: [main]
+    paths-ignore:
+      - "data/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      FDIC_USER_AGENT: ${{ vars.FDIC_USER_AGENT || 'BankSafetySavingsBoard kennethdavis+banks@mail.grokbot.com' }}
+      SITE_URL: ${{ vars.SITE_URL || 'https://klicbaitinc.github.io' }}
+      BASE_PATH: ${{ vars.BASE_PATH || '/bank-safety-board' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Snapshot current data
+        run: |
+          mkdir -p /tmp/data-bak
+          cp data/banks.json data/credit_unions.json data/failures.json /tmp/data-bak/ || true
+      - name: Fetch FDIC institutions, financials, and failures
+        id: fdic
+        continue-on-error: true
+        run: python scripts/fetch_fdic.py --refresh
+      - name: Fetch NCUA credit unions
+        id: ncua
+        continue-on-error: true
+        run: python scripts/fetch_ncua.py --refresh
+      - name: Keep the last good file if a fetch failed
+        if: steps.fdic.outcome == 'failure' || steps.ncua.outcome == 'failure'
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.fdic.outcome }}" = "failure" ]; then
+            cp /tmp/data-bak/banks.json /tmp/data-bak/failures.json data/
+            echo "::warning::FDIC fetch failed. Reusing banks.json and failures.json already in the repo."
+          fi
+          if [ "${{ steps.ncua.outcome }}" = "failure" ]; then
+            cp /tmp/data-bak/credit_unions.json data/
+            echo "::warning::NCUA fetch failed. Reusing credit_unions.json already in the repo."
+          fi
+      - name: Build static site
+        run: python scripts/build_site.py
+      - name: Check pages, sitemap, and the no-rating rule
+        run: python scripts/check_site.py
+      - name: Commit updated data
+        if: steps.fdic.outcome == 'success' || steps.ncua.outcome == 'success'
+        run: |
+          set -euo pipefail
+          git config user.name "bank-safety-board-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/banks.json data/credit_unions.json data/failures.json
+          if git diff --cached --quiet; then
+            echo "data files unchanged"
+            exit 0
+          fi
+          git commit -m "Data refresh $(date -u +%F) [skip ci]"
+          git push origin HEAD:main
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

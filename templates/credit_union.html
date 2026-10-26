@@ -1,0 +1,104 @@
+{% extends "base.html" %}{% from "_macros.html" import newsletter, context, faq_list with context %}
+{% block head %}{% if faq_ld %}<script type="application/ld+json">{{ faq_ld }}</script>{% endif %}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ base }}/">Home</a> · <a href="{{ base }}/credit-unions/">Credit unions</a> · <a href="{{ base }}/credit-unions/state/{{ cu.state | lower }}/">{{ cu.state_name }}</a></p>
+<h1>Is {{ cu.name }} safe?</h1>
+<p class="lede">NCUA share insurance, net worth, and the latest call-report figures. These numbers are not a safety rating and they are not a prediction.</p>
+
+<section class="card insured">
+  <p class="answer">Federally insured: Yes</p>
+  <p>Charter number <b>{{ cu.charter }}</b>. {{ cu.name }} is on the NCUA list of federally insured credit unions.{% if cu.type_label %} Charter type on that list: {{ cu.type_label }}.{% endif %}{% if cu.insured_since %} Insurance date on the call-report file: {{ cu.insured_since | nice_date }}.{% endif %}</p>
+  <p><a href="https://mapping.ncua.gov/ResearchCreditUnion" rel="noopener noreferrer">NCUA credit union research tool</a> (search charter {{ cu.charter }}) · <a href="https://ncua.gov/analysis/credit-union-corporate-call-report-data/quarterly-data" rel="noopener noreferrer">NCUA quarterly call report files</a></p>
+</section>
+
+{% set q = cu.latest %}
+{% set nwr_show = cu.published_nwr if cu.published_nwr is not none else (q.nwr if q else none) %}
+{% if q %}
+<p class="quarter-note">Call-report amounts below are for the quarter ending {{ q.date | nice_date }} ({{ q.quarter }}).</p>
+<h2>Size</h2>
+<div class="metrics">
+  <div class="metric"><b>{{ q.shares | money }}</b><span>Shares and deposits</span></div>
+  <div class="metric"><b>{{ q.assets | money }}</b><span>Total assets</span></div>
+  <div class="metric"><b>{{ cu.members | comma }}</b><span>Members on the NCUA list</span></div>
+  <div class="metric"><b>{{ cu.branches | comma }}</b><span>Branch offices</span></div>
+</div>
+
+<h2>Net worth, loans, and earnings</h2>
+<div class="metrics">
+  <div class="metric"><b>{{ nwr_show | pct }}</b><span>{% if cu.published_nwr is not none %}Net worth ratio (NCUA list){% else %}Net worth ÷ assets{% endif %}</span></div>
+  <div class="metric"><b>{{ q.dlq | pct }}</b><span>Delinquent loans ÷ loans (60 days or more)</span></div>
+  <div class="metric"><b>{{ cu.published_roa | pct }}</b><span>Return on average assets (NCUA list)</span></div>
+  <div class="metric"><b>{{ q.net_worth | money }}</b><span>Total net worth</span></div>
+</div>
+{% if cu.nwr_share is not none %}{{ context(cu.nwr_share, nwr_n, "net worth ratio") }}{% endif %}
+{% if cu.dlq_share is not none %}{{ context(cu.dlq_share, dlq_n, "delinquent-loan ratio") }}{% endif %}
+{% if cu.roa_share is not none %}{{ context(cu.roa_share, roa_n, "return on average assets") }}{% endif %}
+{% if cu.low_income is not none %}<p class="note">NCUA low-income designation: {{ "Yes" if cu.low_income else "No" }}. That designation is about who may join. It is not a financial score.</p>{% endif %}
+
+<h2>Eight-quarter trend</h2>
+<p class="muted small">Net worth ÷ assets and delinquent loans ÷ loans are computed from the call-report dollar amounts. The summary net worth ratio, when labeled “NCUA list,” is the published list figure and can differ slightly.</p>
+<div class="charts">
+  {% if cu.spark_nwr %}<figure class="chart"><figcaption>Net worth ÷ assets</figcaption>{{ cu.spark_nwr }}</figure>{% endif %}
+  {% if cu.spark_dlq %}<figure class="chart"><figcaption>Delinquent loans ÷ loans</figcaption>{{ cu.spark_dlq }}</figure>{% endif %}
+</div>
+<div class="table-scroll">
+  <table class="data">
+    <caption class="sr">Eight quarters of NCUA call-report figures for {{ cu.name }}</caption>
+    <thead>
+      <tr>
+        <th>Quarter</th>
+        <th class="num">Assets</th>
+        <th class="num">Shares and deposits</th>
+        <th class="num">Net worth</th>
+        <th class="num">Net worth ÷ assets</th>
+        <th class="num">Delinquent ÷ loans</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for row in cu.quarters %}
+      <tr>
+        <td class="nowrap">{{ row.quarter }}</td>
+        <td class="num">{{ row.assets | money }}</td>
+        <td class="num">{{ row.shares | money }}</td>
+        <td class="num">{{ row.net_worth | money }}</td>
+        <td class="num">{{ row.nwr | pct }}</td>
+        <td class="num">{{ row.dlq | pct }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="empty">This credit union is on the NCUA insured list. A matching call-report row was not in the quarters loaded for this site.</p>
+{% if cu.published_nwr is not none or cu.list_assets %}
+<div class="metrics">
+  <div class="metric"><b>{{ cu.list_assets | money }}</b><span>Total assets on the NCUA list</span></div>
+  <div class="metric"><b>{{ cu.list_deposits | money }}</b><span>Total deposits on the NCUA list</span></div>
+  <div class="metric"><b>{{ cu.published_nwr | pct }}</b><span>Net worth ratio (NCUA list)</span></div>
+  <div class="metric"><b>{{ cu.published_roa | pct }}</b><span>Return on average assets</span></div>
+</div>
+{% endif %}
+{% endif %}
+
+<h2>Headquarters</h2>
+<p>{{ cu.hq_address }}{% if cu.hq_address %}, {% endif %}{{ cu.hq_city }}, {{ cu.hq_state }} {{ cu.hq_zip }}</p>
+{% if cu.corporate_offices %}<p>{{ cu.corporate_offices | comma }} corporate office{{ "" if cu.corporate_offices == 1 else "s" }} on the NCUA branch file, counted separately from branch offices.</p>{% endif %}
+{% if cu.trade_names %}<p>Trade names on the NCUA file: {{ cu.trade_names | join(", ") }}.</p>{% endif %}
+{% if cu.official_name != cu.name %}<p class="muted small">NCUA name: {{ cu.official_name }}</p>{% endif %}
+
+<section class="card coverage">
+  <h2>Share insurance limit</h2>
+  <p>The standard NCUA share insurance amount is <b>$250,000</b> per member, per federally insured credit union, for each account ownership category. This page does not calculate your coverage.</p>
+  <p><a href="https://ncua.gov/consumers/share-insurance-coverage" rel="noopener noreferrer">NCUA share insurance coverage</a></p>
+</section>
+
+<section class="prose">
+  <h2>What these numbers mean</h2>
+  <p><b>Shares and deposits</b> are member shares and other deposits on the call report. <b>Assets</b> are total assets. <b>Net worth ratio</b> on the NCUA list is net worth divided by total assets, excluding the CECL transition provision. The trend column <b>net worth ÷ assets</b> uses the call-report dollar amounts for total net worth and total assets, so it can differ slightly from the list.</p>
+  <p><b>Delinquent loans</b> are loans and leases that are two months or more past due, divided by total loans and leases. That is a 60-day measure. A bank’s noncurrent-loan ratio is a different statistic (90 days or nonaccrual). <b>Return on average assets</b> is the figure published on the NCUA insured-credit-union list for this quarter.</p>
+  <p><b>Branch offices</b> are rows marked “Branch Office” in the NCUA branch file. The corporate office is counted separately.</p>
+</section>
+
+{{ faq_list(faqs) }}
+{{ newsletter(newsletter) }}
+{% endblock %}

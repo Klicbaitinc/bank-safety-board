@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Federally insured credit unions</h1>
+<p class="lede">{{ cu_count | comma }} credit unions on the NCUA insured list, as of {{ cu_quarter }}. Search by name or charter, or open a state.</p>
+<form class="searchbox" role="search" action="{{ base }}/credit-unions/" onsubmit="return false">
+  <label class="sr" for="q">Search credit unions</label>
+  <input id="q" class="search" type="search" placeholder="Credit union, city, or charter number" autocomplete="off" data-kinds="c">
+</form>
+<div id="results" class="results" hidden></div>
+<p class="mt"><a class="btn ghost" href="{{ base }}/credit-unions/military/">Military and veteran credit unions ({{ military_count | comma }})</a></p>
+<ul class="states states-lg">
+  {% for state in states %}
+  <li><a href="{{ base }}{{ state.path }}">{{ state.name }} <span>{{ state.count | comma }}</span></a></li>
+  {% endfor %}
+</ul>
+{% endblock %}

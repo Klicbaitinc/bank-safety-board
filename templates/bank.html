@@ -1,0 +1,116 @@
+{% extends "base.html" %}{% from "_macros.html" import offer_slot, newsletter, context, faq_list with context %}
+{% block head %}{% if faq_ld %}<script type="application/ld+json">{{ faq_ld }}</script>{% endif %}{% endblock %}
+{% block content %}
+<p class="crumbs"><a href="{{ base }}/">Home</a> · <a href="{{ base }}/state/{{ bank.state | lower }}/">{{ bank.state_name }}</a></p>
+<h1>Is {{ bank.name }} safe?</h1>
+<p class="lede">FDIC insurance, capital, and the latest call-report figures. These numbers are not a safety rating and they are not a prediction that the bank will or will not fail.</p>
+
+<section class="card insured">
+  <p class="answer">FDIC insured: Yes</p>
+  <p>Certificate number <b>{{ bank.cert }}</b>. {{ bank.name }} is on the FDIC list of institutions that are currently open and insured.{% if bank.insured_since %} Deposit insurance on that record began {{ bank.insured_since | nice_date }}.{% endif %}</p>
+  <p><a href="https://banks.data.fdic.gov/bankfind-suite/bankfind/details/{{ bank.cert }}" rel="noopener noreferrer">FDIC BankFind record</a></p>
+</section>
+
+{% set q = bank.latest %}
+{% if q %}
+<p class="quarter-note">Figures below are for the quarter ending {{ q.date | nice_date }} ({{ q.quarter }}), unless a field says otherwise.</p>
+<h2>Size</h2>
+<div class="metrics">
+  <div class="metric"><b>{{ q.deposits | money }}</b><span>Total deposits</span></div>
+  <div class="metric"><b>{{ q.assets | money }}</b><span>Total assets</span></div>
+  <div class="metric"><b>{{ bank.offices | comma }}</b><span>Domestic offices, including the main office</span></div>
+</div>
+
+<h2>Capital</h2>
+<div class="metrics">
+  <div class="metric"><b>{{ q.rbc | pct }}</b><span>Total risk-based capital ratio</span></div>
+  <div class="metric"><b>{{ q.cet1 | pct }}</b><span>Common equity tier 1 capital ratio</span></div>
+  <div class="metric"><b>{{ q.leverage | pct }}</b><span>Tier 1 leverage ratio</span></div>
+  <div class="metric"><b>{{ q.equity_ratio | pct }}</b><span>Equity to assets</span></div>
+</div>
+{% if q.rbc is none and q.cblr == 1 %}
+<p class="note">This bank elected the community bank leverage ratio. FDIC field CBLRIND is 1, and the risk-based capital ratios in that file are 0, which means they were not reported. They are left blank here. The tier 1 leverage ratio is the capital figure the FDIC did report.</p>
+{% elif q.rbc is none %}
+<p class="note">The FDIC did not report a total risk-based capital ratio for this quarter.</p>
+{% endif %}
+{% if bank.rbc_share is not none %}{{ context(bank.rbc_share, rbc_n, "total risk-based capital ratio") }}{% endif %}
+
+<h2>Credit quality and earnings</h2>
+<div class="metrics">
+  <div class="metric"><b>{{ q.npl | pct }}</b><span>Noncurrent loans and leases / gross loans</span></div>
+  <div class="metric"><b>{{ q.roa | pct }}</b><span>Return on assets</span></div>
+  <div class="metric"><b>{{ q.equity | money }}</b><span>Total equity capital</span></div>
+</div>
+{% if bank.npl_share is not none %}{{ context(bank.npl_share, npl_n, "noncurrent-loan ratio") }}{% endif %}
+{% if bank.roa_share is not none %}{{ context(bank.roa_share, roa_n, "return on assets") }}{% endif %}
+
+<h2>Eight-quarter trend</h2>
+<p class="muted small">Oldest quarter on the left of each chart. The table is the source of the figures.</p>
+<div class="charts">
+  {% if bank.spark_rbc %}<figure class="chart"><figcaption>Total risk-based capital ratio</figcaption>{{ bank.spark_rbc }}</figure>{% endif %}
+  {% if bank.spark_npl %}<figure class="chart"><figcaption>Noncurrent loans / loans</figcaption>{{ bank.spark_npl }}</figure>{% endif %}
+  {% if bank.spark_roa %}<figure class="chart"><figcaption>Return on assets</figcaption>{{ bank.spark_roa }}</figure>{% endif %}
+</div>
+<div class="table-scroll">
+  <table class="data">
+    <caption class="sr">Eight quarters of FDIC figures for {{ bank.name }}</caption>
+    <thead>
+      <tr>
+        <th>Quarter</th>
+        <th class="num">Deposits</th>
+        <th class="num">Assets</th>
+        <th class="num">Total RBC ratio</th>
+        <th class="num">CET1 ratio</th>
+        <th class="num">Leverage ratio</th>
+        <th class="num">Equity / assets</th>
+        <th class="num">Noncurrent loans</th>
+        <th class="num">ROA</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for row in bank.quarters %}
+      <tr>
+        <td class="nowrap">{{ row.quarter }}</td>
+        <td class="num">{{ row.deposits | money }}</td>
+        <td class="num">{{ row.assets | money }}</td>
+        <td class="num">{{ row.rbc | pct }}</td>
+        <td class="num">{{ row.cet1 | pct }}</td>
+        <td class="num">{{ row.leverage | pct }}</td>
+        <td class="num">{{ row.equity_ratio | pct }}</td>
+        <td class="num">{{ row.npl | pct }}</td>
+        <td class="num">{{ row.roa | pct }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="empty">The FDIC financial feed did not include a call report for this institution in the quarters loaded for this site.</p>
+{% endif %}
+
+<h2>Headquarters</h2>
+<p>{{ bank.address }}{% if bank.address %}, {% endif %}{{ bank.city }}, {{ bank.state_name }} {{ bank.zip }}</p>
+{% if bank.bkclass_label %}<p>Institution class: {{ bank.bkclass_label }} (FDIC code {{ bank.bkclass }}).</p>{% endif %}
+{% if bank.charter %}<p>Charter number on the FDIC record: {{ bank.charter }}.</p>{% endif %}
+{% if bank.holding_company %}<p>Top holder reported by the FDIC: {{ bank.holding_company }}.</p>{% endif %}
+{% if bank.web %}<p>Website on the FDIC record: <a href="{{ bank.web }}" rel="noopener noreferrer">{{ bank.web }}</a></p>{% endif %}
+{% if bank.official_name != bank.name %}<p class="muted small">FDIC name: {{ bank.official_name }}</p>{% endif %}
+
+<section class="card coverage">
+  <h2>Deposit insurance limit</h2>
+  <p>The standard FDIC deposit insurance amount is <b>$250,000</b> per depositor, per insured bank, for each account ownership category. Coverage can be higher when ownership categories differ. This page does not calculate your coverage.</p>
+  <p><a href="https://www.fdic.gov/resources/deposit-insurance" rel="noopener noreferrer">FDIC explanation of deposit insurance</a></p>
+</section>
+
+<section class="prose">
+  <h2>What these numbers mean</h2>
+  <p><b>Deposits</b> are the balances customers and others have at the bank, as reported on the call report. <b>Assets</b> are everything the bank reports owning. <b>Domestic offices</b> come from the FDIC institution record and include the main office.</p>
+  <p><b>Total risk-based capital ratio</b> is the FDIC field for total risk-based capital divided by risk-weighted assets. <b>Common equity tier 1 capital ratio</b> and the <b>tier 1 leverage ratio</b> are separate FDIC capital measures. <b>Equity to assets</b> is total equity capital divided by total assets, computed on this site from those two dollar amounts. None of these is a grade.</p>
+  <p><b>Noncurrent loans</b> are loans and leases 90 days or more past due, or in nonaccrual, as a percent of gross loans and leases. A higher percent means a larger share of the loan book is in that status. It is not a forecast. <b>Return on assets</b> is annualized net income as a percent of average total assets.</p>
+  <p>Percentiles, when shown, count how many other active banks reported a lower figure for the same quarter. The method is on the <a href="{{ base }}/methodology/">methodology page</a>.</p>
+</section>
+
+{{ faq_list(faqs) }}
+{{ offer_slot(offers) }}
+{{ newsletter(newsletter) }}
+{% endblock %}

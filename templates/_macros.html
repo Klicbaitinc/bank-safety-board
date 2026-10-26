@@ -1,0 +1,45 @@
+{% macro offer_slot(offers) %}
+{% if offers %}
+<aside class="card offer" aria-label="High-yield savings offers">
+  <p class="offer-kicker">High-yield savings offers</p>
+  <ul class="offer-list">
+    {% for offer in offers %}
+    <li>
+      <a href="{{ offer.url }}" rel="sponsored noopener noreferrer" target="_blank">{{ offer.name }}</a>
+      {% if offer.apy_label %}<span class="offer-apy">{{ offer.apy_label }}</span>{% endif %}
+      {% if offer.details %}<span class="muted small">{{ offer.details }}</span>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="muted small">These may be affiliate links. They are not FDIC or NCUA recommendations and they are not ranked. <a href="{{ base }}/disclosure/">Disclosure</a>.</p>
+</aside>
+{% endif %}
+{% endmacro %}
+
+{% macro newsletter(newsletter) %}
+{% if newsletter.url %}
+<section class="card signup" id="newsletter">
+  <h2>{{ newsletter.heading }}</h2>
+  {% if newsletter.text %}<p>{{ newsletter.text }}</p>{% endif %}
+  <a class="btn" href="{{ newsletter.url }}" target="_blank" rel="noopener noreferrer">{{ newsletter.button }}</a>
+</section>
+{% endif %}
+{% endmacro %}
+
+{% macro context(share, n, label) %}
+{% if share is not none and n %}
+<p class="context">{{ "%.1f"|format(share) }}% of {{ n | comma }} reporting institutions had a lower {{ label }} this quarter. The rest were equal or higher. A percentile is not a rating and not a prediction. <a href="{{ base }}/methodology/">How this is counted</a>.</p>
+{% endif %}
+{% endmacro %}
+
+{% macro faq_list(items) %}
+{% if items %}
+<section class="prose">
+  <h2>Questions</h2>
+  {% for item in items %}
+  <h3>{{ item.q }}</h3>
+  <p>{{ item.a }}</p>
+  {% endfor %}
+</section>
+{% endif %}
+{% endmacro %}

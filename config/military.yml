@@ -1,0 +1,41 @@
+# Who appears on /credit-unions/military/.
+#
+# A credit union is included when its NCUA charter name or trade name contains
+# one of `phrases` (word-aware match), or when its charter is listed in
+# `extra_charters`. extra_charters are short installation or service names the
+# phrase list does not catch. Comments are the reason each charter was added;
+# the page itself prints the NCUA name, city, and trade names.
+#
+# 24921 SERVICE, Portsmouth NH — Service Credit Union. Not charter 66530
+#   (also named SERVICE, in Green Bay, WI).
+# 1261 LANGLEY, Newport News VA — trade names include Langley Federal Credit Union.
+# 5561 KEESLER, Biloxi MS
+# 5754 ANDREWS FEDERAL CREDIT UNION, Suitland MD
+# 10754 TYNDALL, Panama City FL
+# 10832 FORT SILL, Lawton OK
+# 13690 FORT BRAGG, Fayetteville NC
+# 15513 FORT DIX, Joint Base MDL, NJ
+# 18150 CAMP SHELBY, Hattiesburg MS
+# 61800 FORT MCCLELLAN, Anniston AL
+phrases:
+  - NATIONAL GUARD
+  - AIR FORCE
+  - COAST GUARD
+  - ARMED FORCES
+  - PENTAGON
+  - VETERAN
+  - MILITARY
+  - NAVY
+  - ARMY
+extra_charters:
+  - 24921
+  - 1261
+  - 5561
+  - 5754
+  - 10754
+  - 10832
+  - 13690
+  - 15513
+  - 18150
+  - 61800
+exclude_charters: []

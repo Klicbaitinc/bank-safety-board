@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Failed banks</h1>
+<p class="lede">Every record in the FDIC failures file with resolution type FAILURE. {{ failures | length | comma }} banks. This list is history. It is not a forecast of which open banks will fail.</p>
+{% if other_resolutions %}
+<p class="muted small">The FDIC file also contains other resolution types that are not listed here:
+{% for key, value in other_resolutions.items() %}{{ key }} ({{ value | comma }}){% if not loop.last %}, {% endif %}{% endfor %}.</p>
+{% endif %}
+<form class="searchbox" role="search" action="{{ base }}/failures/" onsubmit="return false">
+  <label class="sr" for="fail-q">Filter failed banks</label>
+  <input id="fail-q" class="search" type="search" placeholder="Filter by name, city, state, or certificate" autocomplete="off">
+</form>
+<p id="fail-count" class="muted small"></p>
+<div class="table-scroll">
+<table class="data sortable" id="failures">
+  <thead>
+    <tr>
+      <th data-sort="text">Failed</th>
+      <th data-sort="text">Bank</th>
+      <th data-sort="text">State</th>
+      <th class="num" data-sort="num">Assets</th>
+      <th class="num" data-sort="num">Deposits</th>
+      <th class="num" data-sort="num">Estimated loss</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for item in failures %}
+  <tr id="f-{{ item.fdic_id }}" data-q="{{ (item.name ~ ' ' ~ item.official_name ~ ' ' ~ item.city ~ ' ' ~ item.state ~ ' ' ~ item.cert) | lower }}">
+    <td class="nowrap" data-v="{{ item.date }}">{{ item.date | nice_date }}</td>
+    <td data-v="{{ item.name }}">{{ item.name }}<span class="co">{% if item.cert is not none %}FDIC {{ item.cert }}{% else %}No certificate number on this record{% endif %}</span></td>
+    <td data-v="{{ item.state }}">{{ item.city }}{% if item.state %}, {{ item.state }}{% endif %}</td>
+    <td class="num" data-v="{{ item.assets if item.assets is not none else '' }}">{{ item.assets | money }}</td>
+    <td class="num" data-v="{{ item.deposits if item.deposits is not none else '' }}">{{ item.deposits | money }}</td>
+    <td class="num" data-v="{{ item.cost if item.cost is not none else '' }}">{{ item.cost | money }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<p class="muted small mt">Assets, deposits, and estimated loss are the FDIC fields for the quarter before failure and the estimated loss to the Deposit Insurance Fund. Dollar amounts were reported in thousands and are multiplied by 1,000 here. <a href="https://banks.data.fdic.gov/bankfind-suite/bankfind" rel="noopener noreferrer">FDIC BankFind</a></p>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% from "_macros.html" import newsletter with context %}
+{% block content %}
+<article class="prose">
+<h1>About the Bank Safety &amp; Savings Board</h1>
+<p>A free, no-login lookup of FDIC-insured banks and federally insured credit unions. Kenneth Davis runs it independently. It is not a bank, credit union, broker, or adviser, and it is not part of the FDIC or the NCUA.</p>
+<h2>Who runs this</h2>
+<p>Kenneth Davis. Contact: <a href="mailto:{{ contact }}">{{ contact }}</a>.</p>
+<p><a href="{{ base }}/methodology/">Methodology</a> · <a href="{{ base }}/disclosure/">Affiliate disclosure</a> · <a href="{{ base }}/privacy/">Privacy</a></p>
+<h2>What the pages do</h2>
+<p>Each active bank and each federally insured credit union has its own page of figures from the latest public call report: insurance status, size, capital or net worth, problem loans, and earnings. The figures are the agencies’ numbers. The site does not turn them into a score.</p>
+<p><b>Not financial advice.</b> Nothing here recommends opening, keeping, or closing an account. Reports can be revised, and a strong ratio in one quarter does not decide what happens next. Confirm anything important on the linked FDIC or NCUA record.</p>
+</article>
+{{ newsletter(newsletter) }}
+{% endblock %}

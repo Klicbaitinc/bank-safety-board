@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="crumbs"><a href="{{ base }}/">Home</a> · <a href="{{ base }}/states/">States</a></p>
+<h1>Banks in {{ state_name }}: capital and health data</h1>
+<p class="lede">{{ rows | length | comma }} active FDIC-insured banks. Figures are for {{ bank_quarter }}. Click a heading to sort. Sorting changes the view only. It is not a ranking by this site.</p>
+{% if cu_path %}<p><a href="{{ base }}{{ cu_path }}">Credit unions in {{ state_name }} ({{ cu_count | comma }})</a></p>{% endif %}
+<div class="table-scroll">
+<table class="data sortable">
+  <caption class="sr">Banks in {{ state_name }}</caption>
+  <thead>
+    <tr>
+      <th data-sort="text">Bank</th>
+      <th data-sort="text">City</th>
+      <th class="num" data-sort="num">Deposits</th>
+      <th class="num" data-sort="num">Assets</th>
+      <th class="num" data-sort="num">Total RBC</th>
+      <th class="num" data-sort="num">Noncurrent</th>
+      <th class="num" data-sort="num">ROA</th>
+      <th class="num" data-sort="num">Offices</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for bank in rows %}
+  {% set q = bank.latest %}
+  <tr>
+    <td data-v="{{ bank.name }}"><a href="{{ base }}{{ bank.path }}">{{ bank.name }}</a><span class="co">FDIC {{ bank.cert }}</span></td>
+    <td data-v="{{ bank.city }}">{{ bank.city }}</td>
+    <td class="num" data-v="{{ q.deposits if q and q.deposits is not none else '' }}">{{ q.deposits | money if q else '—' }}</td>
+    <td class="num" data-v="{{ q.assets if q and q.assets is not none else '' }}">{{ q.assets | money if q else '—' }}</td>
+    <td class="num" data-v="{{ q.rbc if q and q.rbc is not none else '' }}">{{ q.rbc | pct if q else '—' }}</td>
+    <td class="num" data-v="{{ q.npl if q and q.npl is not none else '' }}">{{ q.npl | pct if q else '—' }}</td>
+    <td class="num" data-v="{{ q.roa if q and q.roa is not none else '' }}">{{ q.roa | pct if q else '—' }}</td>
+    <td class="num" data-v="{{ bank.offices if bank.offices is not none else '' }}">{{ bank.offices | comma }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

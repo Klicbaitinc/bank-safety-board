@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="crumbs"><a href="{{ base }}/">Home</a> · <a href="{{ base }}/credit-unions/">Credit unions</a></p>
+<h1>Credit unions in {{ state_name }}</h1>
+<p class="lede">{{ rows | length | comma }} federally insured credit unions. Net worth and deposits as of {{ cu_quarter }}. Click a heading to sort. Sorting is not a ranking by this site.</p>
+{% if bank_path %}<p><a href="{{ base }}{{ bank_path }}">Banks in {{ state_name }}</a></p>{% endif %}
+<div class="table-scroll">
+<table class="data sortable">
+  <thead>
+    <tr>
+      <th data-sort="text">Credit union</th>
+      <th data-sort="text">City</th>
+      <th class="num" data-sort="num">Shares and deposits</th>
+      <th class="num" data-sort="num">Assets</th>
+      <th class="num" data-sort="num">Net worth ratio</th>
+      <th class="num" data-sort="num">Delinquent / loans</th>
+      <th class="num" data-sort="num">ROA</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for cu in rows %}
+  {% set q = cu.latest %}
+  <tr>
+    <td data-v="{{ cu.name }}"><a href="{{ base }}{{ cu.path }}">{{ cu.name }}</a><span class="co">Charter {{ cu.charter }}</span></td>
+    <td data-v="{{ cu.city }}">{{ cu.city }}</td>
+    <td class="num" data-v="{{ q.shares if q and q.shares is not none else '' }}">{{ q.shares | money if q else '—' }}</td>
+    <td class="num" data-v="{{ q.assets if q and q.assets is not none else '' }}">{{ q.assets | money if q else '—' }}</td>
+    <td class="num" data-v="{{ cu.published_nwr if cu.published_nwr is not none else (q.nwr if q else '') }}">{{ (cu.published_nwr if cu.published_nwr is not none else (q.nwr if q else none)) | pct }}</td>
+    <td class="num" data-v="{{ q.dlq if q and q.dlq is not none else '' }}">{{ q.dlq | pct if q else '—' }}</td>
+    <td class="num" data-v="{{ cu.published_roa if cu.published_roa is not none else '' }}">{{ cu.published_roa | pct }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

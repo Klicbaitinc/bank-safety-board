@@ -1,0 +1,9 @@
+# High-yield savings offers. The slot is hidden while `offers` is empty.
+# Shown on the homepage and on bank pages. https URLs only.
+#
+# offers:
+#   - name: Example High-Yield Savings
+#     url: https://example.com/savings
+#     apy_label: "4.50% APY"
+#     details: "Terms apply. Not an FDIC or NCUA recommendation."
+offers: []

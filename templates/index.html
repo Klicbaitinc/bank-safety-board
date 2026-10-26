@@ -1,0 +1,63 @@
+{% extends "base.html" %}{% from "_macros.html" import offer_slot, newsletter with context %}
+{% block content %}
+<section class="hero">
+  <h1>Is my bank safe?</h1>
+  <p class="lede">Every active FDIC-insured bank, and every federally insured credit union, with the latest official numbers. No login. No safety score.</p>
+  <form class="searchbox" role="search" action="{{ base }}/" onsubmit="return false">
+    <label class="sr" for="q">Search banks and credit unions</label>
+    <input id="q" class="search" type="search" placeholder="Bank, credit union, city, or certificate number" autocomplete="off" data-kinds="b c f">
+  </form>
+  <div id="results" class="results" hidden></div>
+  <noscript><p>Search uses JavaScript. You can also open a <a href="{{ base }}/states/">state page</a>.</p></noscript>
+  <div class="stats">
+    <div class="stat"><b>{{ bank_count | comma }}</b><span>active FDIC-insured banks</span></div>
+    <div class="stat"><b>{{ cu_count | comma }}</b><span>federally insured credit unions</span></div>
+    <div class="stat"><b>{{ recent_count | comma }}</b><span>bank failures in the FDIC file, last 24 months</span></div>
+    <div class="stat"><b>{{ bank_quarter }}</b><span>latest bank report quarter</span></div>
+  </div>
+</section>
+
+<div class="grid">
+  <div>
+    <h2>Recent bank failures</h2>
+    <p class="muted small">Failures the FDIC has already recorded. This is not a list of banks expected to fail.</p>
+    {% if recent_failures %}
+    <div class="table-scroll">
+      <table class="data">
+        <thead><tr><th>Date</th><th>Bank</th><th class="num">Assets</th><th class="num">Deposits</th></tr></thead>
+        <tbody>
+        {% for item in recent_failures %}
+        <tr>
+          <td class="nowrap">{{ item.date | nice_date }}</td>
+          <td><a href="{{ base }}/failures/#f-{{ item.fdic_id }}">{{ item.name }}</a><span class="co">{{ item.city }}{% if item.state %}, {{ item.state }}{% endif %} · cert {{ item.cert }}</span></td>
+          <td class="num">{{ item.assets | money }}</td>
+          <td class="num">{{ item.deposits | money }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty">No failures in the FDIC file for the last 24 months.</p>
+    {% endif %}
+    <p class="mt"><a class="btn ghost" href="{{ base }}/failures/">All {{ failure_count | comma }} failed banks</a></p>
+
+    <h2 class="mt">Banks by state</h2>
+    <ul class="states">
+      {% for state in states %}
+      <li><a href="{{ base }}{{ state.path }}">{{ state.name }} <span>{{ state.banks | comma }}</span></a></li>
+      {% endfor %}
+    </ul>
+  </div>
+  <div class="side-col">
+    {{ newsletter(newsletter) }}
+    {{ offer_slot(offers) }}
+    <section class="card">
+      <h2>How to read this</h2>
+      <p>Each bank page shows FDIC insurance (yes or no), the certificate number, deposits, assets, capital ratios, noncurrent loans, and return on assets.</p>
+      <p>Numbers stay numbers. This site does not assign letter grades, stars, or a safety score, and it does not predict failures.</p>
+      <p><a href="{{ base }}/credit-unions/">Credit unions</a> · <a href="{{ base }}/credit-unions/military/">Military and veteran credit unions</a> · <a href="{{ base }}/methodology/">Methodology</a></p>
+    </section>
+  </div>
+</div>
+{% endblock %}

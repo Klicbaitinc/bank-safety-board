@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Banks by state</h1>
+<p class="lede">Capital and health figures for active FDIC-insured banks, as of {{ bank_quarter }}. Each state page is sortable.</p>
+<ul class="states states-lg">
+  {% for state in states %}
+  <li>
+    <a href="{{ base }}{{ state.path }}">{{ state.name }} <span>{{ state.banks | comma }} banks</span></a>
+    {% if state.cu_path %}<a class="sub" href="{{ base }}{{ state.cu_path }}">{{ state.credit_unions | comma }} credit unions</a>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

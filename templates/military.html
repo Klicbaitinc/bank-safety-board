@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<p class="crumbs"><a href="{{ base }}/">Home</a> · <a href="{{ base }}/credit-unions/">Credit unions</a></p>
+<h1>Military and veteran credit unions</h1>
+<p class="lede">{{ rows | length }} federally insured credit unions whose NCUA name or trade name contains {% for phrase in phrases %}{{ phrase.title() }}{% if not loop.last %}, {% endif %}{% endfor %}, plus charter numbers {% for charter in extra_charters %}{{ charter }}{% if not loop.last %}, {% endif %}{% endfor %} whose NCUA names are short installation or service names. Navy Federal (charter 5536), Pentagon Federal / PenFed (charter 227), and Service (charter 24921, Portsmouth, New Hampshire) are in this set when those charters are in the current file.</p>
+<p>This is not an NCUA category, not a list of credit unions a person is eligible to join, and not a safety ranking. A credit union can serve a military community and still be absent, because the NCUA name does not contain these words. Charter 66530 is also named SERVICE, in Green Bay, Wisconsin, and is not listed. Sorted by total assets.</p>
+<div class="table-scroll">
+<table class="data">
+  <thead>
+    <tr><th>Credit union</th><th>Headquarters</th><th class="num">Assets</th><th class="num">Net worth ratio</th><th class="num">Members</th><th>Why it is listed</th></tr>
+  </thead>
+  <tbody>
+  {% for cu in rows %}
+  {% set q = cu.latest %}
+  <tr>
+    <td><a href="{{ base }}{{ cu.path }}">{{ cu.name }}</a><span class="co">Charter {{ cu.charter }}{% if cu.trade_names %} · {{ cu.trade_names | join(", ") }}{% endif %}</span></td>
+    <td>{{ cu.city }}, {{ cu.state }}</td>
+    <td class="num">{{ q.assets | money if q else '—' }}</td>
+    <td class="num">{{ (cu.published_nwr if cu.published_nwr is not none else (q.nwr if q else none)) | pct }}</td>
+    <td class="num">{{ cu.members | comma }}</td>
+    <td class="why">{{ cu.military_reason }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
