@@ -5,8 +5,8 @@
 # and is marked [skip ci], and this workflow ignores pushes that only change
 # data/, so the data commit cannot start another run.
 #
-# Pages source must be GitHub Actions. configure-pages enablement tries to
-# turn Pages on when the workflow has permission to do so.
+# Pages source must be GitHub Actions. The site is already enabled; configure-pages
+# enablement only tries to turn Pages on when the workflow has permission to do so.
 #
 # Optional repository variables:
 #   FDIC_USER_AGENT  contact string sent to FDIC and NCUA
